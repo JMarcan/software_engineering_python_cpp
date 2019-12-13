@@ -12,7 +12,48 @@ class Robot(object):
         self.location = [0, 0]
         self.heading = 'up'
         self.maze_dim = maze_dim
+        
+        self.visited_fields =[[0 for j in range(maze_dim)] for i in range(maze_dim)]
+    
 
+    def wall_follower(self, sensors):
+        # wall follower algo will not work for non simple-connected type of maze
+        movement = 0
+        rotation = 0
+        
+        if sensors[1] > 0:
+            movement = 1
+            rotation = 0
+            print ("move 1 forward")
+        else:
+            movement = 1
+            rotation = 90
+            print ("move right")
+            
+        return rotation, movement
+    
+    
+    def tremaux_algo(self, sensors):
+        movement = 0
+        rotation = 0
+        
+        if self.visited_fields[self.location[0]][self.location[1]] == True:
+            print ("Warrning: Looping in the same location")
+
+        self.visited_fields[self.location[0]][self.location[1]] = True
+        
+        if sensors[1] > 0:
+            movement = 1
+            rotation = 0
+            print ("move 1 forward")
+        else:
+            movement = 1
+            rotation = 90
+            print ("move right")
+            
+        return rotation, movement
+               
+        
     def next_move(self, sensors):
         '''
         Use this function to determine the next move the robot should make,
@@ -35,7 +76,12 @@ class Robot(object):
         the tester to end the run and return the robot to the start.
         '''
 
-        rotation = 0
-        movement = 0
+       
+        # wall follower algo will not work for this type of maze
+        rotation, movement = self.tremaux_algo(sensors)
+        
+  
+      
+       
 
         return rotation, movement
