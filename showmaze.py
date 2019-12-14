@@ -1,18 +1,10 @@
 from maze import Maze
 import turtle
 import sys
-
-if __name__ == '__main__':
-    '''
-    This function uses Python's turtle library to draw a picture of the maze
-    given as an argument when running the script.
-    '''
-
-    # Create a maze based on input argument on command line.
-    testmaze = Maze( str(sys.argv[1]) )
-
+import json
+    
+def draw_maze(testmaze, window):
     # Intialize the window and drawing turtle.
-    window = turtle.Screen()
     wally = turtle.Turtle()
     wally.speed(0)
     wally.hideturtle()
@@ -55,4 +47,48 @@ if __name__ == '__main__':
                 wally.forward(sq_size)
                 wally.penup()
 
+def draw_robot_movement(testmaze, window):
+    robot = turtle.Turtle()
+    
+    # maze centered on (0,0), squares are 20 units in length.
+    sq_size = 20
+    origin = testmaze.dim * sq_size / -2
+    
+    robot.shape("turtle")
+    robot.pencolor("green")
+    robot.speed(2)
+    
+    #set innitial robot position
+    robot.hideturtle()
+    robot.penup()
+    robot.goto(origin + sq_size / 2, origin + sq_size / 2)
+    robot.showturtle()
+    robot.pendown()
+    
+    heading_dict = {"up": 90, "right": 0, "down": 270, "left": 180}
+
+    with open("travelled_path.json", 'r') as file:
+        file.readline() # skip headline
+        for line in file:
+            x, y, visited, heading = json.loads(line)
+            
+            robot.setheading(heading_dict[heading])
+            
+            center_x = origin + sq_size * x + sq_size / 2
+            center_y = origin + sq_size * y + sq_size / 2
+            robot.goto(center_x, center_y)
+
+if __name__ == '__main__':
+    '''
+    This function uses Python's turtle library to draw a picture of the maze
+    given as an argument when running the script.
+    '''
+    # Create a maze based on input argument on command line.
+    testmaze = Maze( str(sys.argv[1]) )
+    
+    window = turtle.Screen()
+    
+    draw_maze(testmaze, window)
+    draw_robot_movement(testmaze, window)
+    
     window.exitonclick()

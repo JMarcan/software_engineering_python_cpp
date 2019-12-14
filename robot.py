@@ -29,10 +29,9 @@ class Robot(object):
         self.visited_once = 1
         self.visited_twice = 2
         
-        # create file logging visited path
-        f = open(self.log_filename,"w+")
-        f.close()
-    
+        # create file logging visited path and write head line
+        with open(self.log_filename, 'w+') as file:
+            file.write('[robot_x, robot_y, visited, heading]\n')
     
         self.DEBUG = True
     def print_debug(self, debug_message):
@@ -207,16 +206,8 @@ class Robot(object):
         # Data format: [Pos-X, Pos-Y, CellValue, Heading]
         x = self.location[0]
         y = self.location[1]
-            
-        data = {}
-        data['movement'] = []
-        data['movement'].append({
-            'Pos_x': x,
-            'Pos_y': y,
-            'Field Value': int(self.path_grid[x, y]),
-            'Heading': self.heading
-        })
-            
+        
+        data = [x, y, int(self.path_grid[x][y]), self.heading]
         with open(self.log_filename, 'a') as file:
             json.dump(data, file)
             file.write('\n')
