@@ -3,7 +3,7 @@
 # Robot Motion Planning: Plot and Navigate a Virtual Maze
 
 ## Project description
-I've completed this as graduation project from Udacity Data Science Nanodegree. 
+I've completed this as my graduation project from Udacity Data Science Nanodegree. 
 
 The project solves [Micromouse](https://en.wikipedia.org/wiki/Micromouse) competition, wherein a robot mouse is tasked with plotting a path from a corner of the maze to its center.
 - A simulated robot mouse is placed in the maze corner with the goal to **find the shortest path to the maze's center**. The robot has three (the front, left and the right) obstacle sensors detecting the number of open squares in the direction of the sensor. 
