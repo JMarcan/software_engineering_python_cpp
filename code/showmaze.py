@@ -2,7 +2,7 @@ from maze import Maze
 import turtle
 import sys
 import json
-    
+ 
 def draw_maze(testmaze, window):
     # Intialize the window and drawing turtle.
     wally = turtle.Turtle()
@@ -56,7 +56,7 @@ def draw_robot_movement(testmaze, window):
     
     robot.shape("turtle")
     robot.pencolor("green")
-    robot.speed(2)
+    robot.speed(10)
     
     #set innitial robot position
     robot.hideturtle()
@@ -67,17 +67,13 @@ def draw_robot_movement(testmaze, window):
     
     heading_dict = {"up": 90, "right": 0, "down": 270, "left": 180}
 
+    
     with open("travelled_path.json", 'r') as file:
         file.readline() # skip headline
         for line in file:
             x, y, visited, heading = json.loads(line)
             
-            robot.setheading(heading_dict[heading])
-            
-            center_x = origin + sq_size * x + sq_size / 2
-            center_y = origin + sq_size * y + sq_size / 2
-            robot.goto(center_x, center_y)
-
+            robot.setheading(heading_dict[heading]) 
 if __name__ == '__main__':
     '''
     This function uses Python's turtle library to draw a picture of the maze
@@ -88,7 +84,7 @@ if __name__ == '__main__':
     
     window = turtle.Screen()
     
-    draw_maze(testmaze, window)
+    #draw_maze(testmaze, window)
     draw_robot_movement(testmaze, window)
     
     window.exitonclick()

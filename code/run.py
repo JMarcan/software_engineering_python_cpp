@@ -43,6 +43,7 @@ if __name__ == '__main__':
         run_active = True
         hit_goal = False
         while run_active:
+            print ("Robot pos: {0}".format(robot_pos))
             # check for end of time
             total_time += 1
             if total_time > max_time:
