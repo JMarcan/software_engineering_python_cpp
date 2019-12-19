@@ -97,37 +97,15 @@ class Robot(object):
             rotation = 90
             self.print_debug("move right")
             
-        # 4. If you reached a dead end, turn back 180 degrees
-        # if you can turn right,do it        
+        # 4. If you reached a dead end, turn back 180 degrees 
+        # (done in two steps by turning right)        
         else:
-            movement = 1
-            rotation = self.turn_backwards()
-            self.print_debug("move backward")
+            movement = 0
+            rotation = 90
+            self.print_debug("dead end, turn to the right, no movement")
             
         return rotation, movement
    
-    def turn_backwards(self):
-        """Turns the robot backwards 180°degrees
-            
-        Args: 
-            None
-        
-        Returns: 
-            rotation
-        Examples:
-            >>> rotation = 90
-            >>> rotation = self.turn_backwards()
-        """
-        rotation = 0
-        
-        if rotation == 0:
-            rotation = 180
-        elif rotation == 90:
-            rotation = -90
-        elif rotation == -90:
-            rotation = 90
-            
-        return rotation
     
     def update_map(self, possible_directions):
         """Update the robot's internal map using the unblocked (open)
@@ -327,6 +305,7 @@ class Robot(object):
         x = self.location[0]
         y = self.location[1]
         
+        # update heading
         if rotation != 0: #change in direction
             if rotation == 90: # turn right
                 if self.heading == 'up':
@@ -356,14 +335,13 @@ class Robot(object):
                 elif self.heading == 'left':
                      self.heading = 'right'    
                 
-            
-        if self.heading == 'up':
-            self.location = [x, y+1]
-        elif self.heading == 'right':
-            self.location = [x+1, y]
-        elif self.heading == 'left':
-            self.location = [x-1, y]
-        elif self.heading == 'down':
-            self.location = [x, y-1]
-
-        
+        # update position
+        if movement > 0:
+            if self.heading == 'up':
+                self.location = [x, y+1]
+            elif self.heading == 'right':
+                self.location = [x+1, y]
+            elif self.heading == 'left':
+                self.location = [x-1, y]
+            elif self.heading == 'down':
+                self.location = [x, y-1]
