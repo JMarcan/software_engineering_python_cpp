@@ -48,12 +48,23 @@ def draw_maze(testmaze, window):
                 wally.penup()
 
 def draw_robot_movement(testmaze, window):
-    robot = turtle.Turtle()
-    
     # maze centered on (0,0), squares are 20 units in length.
     sq_size = 20
     origin = testmaze.dim * sq_size / -2
     
+    # mark starting point
+    robot_start_point = turtle.Turtle()
+    robot_start_point.color("green")
+    robot_start_point.shape("circle")
+    robot_start_point.hideturtle()
+    robot_start_point.penup()
+    robot_start_point.goto(origin + sq_size / 2, origin + sq_size / 2)
+    robot_start_point.showturtle()
+    
+    # draw robot movement
+    robot = turtle.Turtle()
+    
+
     robot.shape("turtle")
     robot.pencolor("green")
     robot.speed(10)
@@ -62,6 +73,8 @@ def draw_robot_movement(testmaze, window):
     robot.hideturtle()
     robot.penup()
     robot.goto(origin + sq_size / 2, origin + sq_size / 2)
+    
+    
     robot.showturtle()
     robot.pendown()
     
@@ -73,7 +86,14 @@ def draw_robot_movement(testmaze, window):
         for line in file:
             x, y, visited, heading = json.loads(line)
             
+            pos_x = origin + sq_size * x + sq_size / 2
+            pos_y = origin + sq_size * y + sq_size / 2
+            
             robot.setheading(heading_dict[heading]) 
+            robot.pendown()
+            robot.goto(pos_x, pos_y)
+            robot.penup()
+            
 if __name__ == '__main__':
     '''
     This function uses Python's turtle library to draw a picture of the maze
@@ -84,7 +104,7 @@ if __name__ == '__main__':
     
     window = turtle.Screen()
     
-    #draw_maze(testmaze, window)
+    draw_maze(testmaze, window)
     draw_robot_movement(testmaze, window)
     
     window.exitonclick()
