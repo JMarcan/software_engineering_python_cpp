@@ -13,7 +13,7 @@ dir_reverse = {'u': 'd', 'r': 'l', 'd': 'u', 'l': 'r',
                'up': 'd', 'right': 'l', 'down': 'u', 'left': 'r'}
 
 # test and score parameters
-max_time = 1000
+max_time = 30
 train_score_mult = 1/30.
 
 if __name__ == '__main__':
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         run_active = True
         hit_goal = False
         while run_active:
-            print ("Robot pos: {0}".format(robot_pos))
+            print ("run.py robot pos: {0}".format(robot_pos))
             # check for end of time
             total_time += 1
             if total_time > max_time:
