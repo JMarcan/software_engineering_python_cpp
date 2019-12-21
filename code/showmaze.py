@@ -148,6 +148,10 @@ class MazeVizualization(object):
                 pos_x = self.origin + self.sq_size * x + self.sq_size / 2
                 pos_y = self.origin + self.sq_size * y + self.sq_size / 2
             
+                if visited == 1:
+                    robot.pencolor("green")
+                elif visited == 2:
+                    robot.pencolor("brown")
                 robot.setheading(heading_dict[heading]) 
                 robot.pendown()
                 robot.goto(pos_x, pos_y)
