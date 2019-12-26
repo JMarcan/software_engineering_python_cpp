@@ -20,6 +20,8 @@ class MazeVizualization(object):
 
         self.sq_size = sq_size
         self.origin = origin
+        
+        self.DEBUG = False # in debug mode are drawn even field numbers to simplify debugging
          
     def draw_maze(self, testmaze):
         """Draw the maze structure
@@ -132,8 +134,7 @@ class MazeVizualization(object):
         robot.hideturtle()
         robot.penup()
         robot.goto(self.origin + self.sq_size / 2, self.origin + self.sq_size / 2)
-    
-    
+            
         robot.showturtle()
         robot.pendown()
     
@@ -143,7 +144,7 @@ class MazeVizualization(object):
         with open(robot_path, "r") as file:
             file.readline() # skip headline
             for line in file:
-                x, y, visited, heading = json.loads(line)
+                step_count, x, y, visited, heading = json.loads(line)
             
                 pos_x = self.origin + self.sq_size * x + self.sq_size / 2
                 pos_y = self.origin + self.sq_size * y + self.sq_size / 2
@@ -152,9 +153,18 @@ class MazeVizualization(object):
                     robot.pencolor("green")
                 elif visited == 2:
                     robot.pencolor("brown")
+                elif visited == 3:
+                    robot.pencolor("orange")
+                    
                 robot.setheading(heading_dict[heading]) 
                 robot.pendown()
                 robot.goto(pos_x, pos_y)
+                 
+                if self.DEBUG == True:
+                    # in debug mode are drawn even field numbers to simplify debugging
+                    text = "[{0}, {1}".format(x, y)
+                    robot.write(text, False, align="center", font=("Arial", 5, "normal"))
+
                 robot.penup()
             
 if __name__ == '__main__':
