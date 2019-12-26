@@ -1,5 +1,3 @@
-# (THE PROJECT IS IN ONGOING DEVELOPMENT AND WILL BE FINISHED BY THE DECEMBER 2019)
-
 # Robot Motion Planning: Plot and Navigate a Virtual Maze
 
 ## Project description
