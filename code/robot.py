@@ -6,49 +6,72 @@ from sys import stderr
 class Robot(object):
     def __init__(self, maze_dim):
         """
-        Use the initialization function to set up attributes that your robot
+        set up attributes that the robot
         will use to learn and navigate the maze. Some initial attributes are
         provided based on common information, including the size of the maze
         the robot is placed in.
-        """
         
+        Args: 
+                maze_dim: int providing maze dimensions 
+                (e.g. 12 means that maze has dimensions 12x12)
+            
+        Returns: 
+                None
+        """
+        self.maze_dim = maze_dim
+        self.maze_area = maze_dim ** 2.
+        
+        # robot location tracking variables
         self.location_orig = [0, 0]
         self.location = [0, 0]
         self.location_last = [0, 0]
         
         self.heading = 'up'
-        self.maze_dim = maze_dim
         
-        self.maze_area = maze_dim ** 2.
+        # variables to create robot's internal map of the maze
         self.maze_grid = np.zeros((maze_dim, maze_dim), dtype=np.int) # Grid for wall locations for each maze.
         self.path_grid = np.zeros((maze_dim, maze_dim), dtype=np.int)
         self.visited_grid = np.zeros((maze_dim, maze_dim), dtype=np.int) #visited paths used for Treumax algo
         self.visited_grid_previous_heading = np.zeros((maze_dim, maze_dim), dtype=object) #visited paths used for Treumax algo
         
-        
+        # measuring number of steps in which the maze was solved
         self.step_count = 0
         
-        # Text file in which the travelled path will be logged.
-        self.log_filename = 'robot_path.json'
+         # Maximum allowed movement units per turn
+        self.max_movement = 3
         
         self.backtracking = False
-        self.innitial_turn_180 = False #to indicate that 180 degrees turn must be completed (done by two right turns)
+        self.is_reversing = False  #to indicate that 180 degrees turn must be completed (done by two right turns)
         
         
-        # The robot's current mode of operation.
-        # This decides what the robot does when next_move() is called.
+        # Robot's operational mode
+        # This decides robot's action when next_move() is called.
         self.mode = "explore"
         
         # Flag that indicates the first step of exploration
         self.is_beginning = True
         
-        self.is_reversing = False
-        
         #possible path grid values
         self.UNVISITED = 0
         self.VISITED = 1
         self.DOUBLE_VISITED = 2
+        self.SHORTEST = 3 # marking shortest path, so it can be visualized
         
+        # Numbers assigned to open walls in cells.
+        self.wall_values = {'up': 1,
+                            'right': 2,
+                            'down': 4,
+                            'left': 8}
+        
+        # Internal robot's maze cell map
+        # Each number represents a four-bit number that has a bit value of 0 if an edge is closed (walled) and
+        # 1 if an edge is open (no wall); the 1s register corresponds with the upwards-facing side, the 2s register
+        # the right side, the 4s register the bottom side, and the 8s register the left side. For example,
+        # the number 10 means that a square is open on the left and right,
+        # with walls on top and bottom (0*1 + 1*2 + 0*4 + 1*8 = 10).
+        # The index origin (0, 0) is at the bottom left
+        
+        self.maze_map = [[0 for _ in range(maze_dim)] for _ in range(maze_dim)]
         
         # Corresponding new headings after rotating
         self.dict_rotation = {'up': ['left', 'right'],
@@ -60,16 +83,35 @@ class Robot(object):
                          'right': 'left',
                          'down': 'up',
                          'left': 'right'}
-         # Dictionary for backtracking, connects robot headings with rotations needed to face a global direction
+        
+         # Vectors for different directions
+        self.direction_to_vec = {'up': [0, 1],
+                                 'right': [1, 0],
+                                 'down': [0, -1],
+                                 'left': [-1, 0]}
+        
+        # Rotation matrices
+        self.rot_matrices = {'left': np.array([(0, 1), (-1, 0)]),
+                             'up': np.array([(1, 0), (0, 1)]),
+                             'right': np.array([(0, -1), (1, 0)])}
+         # Dictionary for backtracking, translates robot's headings into direction relative to the maze
         self.direction_to_rotation = {
                 heading: {directions[0]: -90, directions[1]: 90}
                 for heading, directions in self.dict_rotation.items()}
         
+        # Policy grid which will be created after performing a search algorithm.
+        self.policy_grid = [['' for _ in range(self.maze_dim)] for _ in
+                            range(self.maze_dim)]
+        # Text file in which the travelled path will be logged.
+        self.log_filename = 'robot_path.json'
+        
         # create file logging visited path and write head line
         with open(self.log_filename, 'w+') as file:
             file.write('[step_count, robot_x, robot_y, visited, heading]\n')
-    
-        self.DEBUG = True
+            
+        # decides whether debug message will be displayed
+        self.DEBUG = False
+        
     def print_debug(self, debug_message):
         """Prints debug message if Debug mode is set to True
          
@@ -169,44 +211,48 @@ class Robot(object):
                 global_dir = self.dict_rotation[self.heading][0]
             elif direction == 'right':
                 global_dir = self.dict_rotation[self.heading][1]
-            elif direction == 'forward':
+            elif direction == 'up':
                 global_dir = self.heading
 
             # Get the corresponding wall value for an wall opening in the given direction
             wall_value = self.wall_values[global_dir]
             # Update the current map cell with the new wall value
-            self.maze_map[self.x][self.y] |= wall_value
+            self.maze_map[self.location[0]][self.location[1]] |= wall_value
             # Rotate robot's direction vector to given direction
             dir_vec = np.dot(movement_vec, self.rot_matrices[direction])
             # Get the wall opening value for the next cell
             wall_value = self.wall_values[self.opposite[global_dir]]
             # Update the next map cell with the opening that can be seen from this cell.
-            # If this step is omitted, the robot never maps entries to deadends.
-            self.maze_map[self.x + dir_vec[0]][
-                self.y + dir_vec[1]] |= wall_value   
+            # maps entries to deadends.
+            self.maze_map[self.location[0] + dir_vec[0]][
+                self.location[1] + dir_vec[1]] |= wall_value   
  
             
     def next_move(self, sensors):
-        '''
-        Use this function to determine the next move the robot should make,
-        based on the input from the sensors after its previous move. Sensor
-        inputs are a list of three distances from the robot's left, front, and
-        right-facing sensors, in that order.
-
-        Outputs should be a tuple of two values. The first value indicates
-        robot rotation (if any), as a number: 0 for no rotation, +90 for a
-        90-degree rotation clockwise, and -90 for a 90-degree rotation
-        counterclockwise. Other values will result in no rotation. The second
-        value indicates robot movement, and the robot will attempt to move the
-        number of indicated squares: a positive number indicates forwards
-        movement, while a negative number indicates backwards movement. The
-        robot may move a maximum of three units per turn. Any excess movement
-        is ignored.
-
-        If the robot wants to end a run (e.g. during the first training run in
-        the maze) then returing the tuple ('Reset', 'Reset') will indicate to
-        the tester to end the run and return the robot to the start.
-        '''
+        """
+        This function determines the next move the robot should make,
+        based on the input from the sensors after its previous move. 
+        
+         Args: 
+            sensors: inputs are a list of three distances from the robot's left, 
+                front, and right-facing sensors, in that order
+        
+        Returns: 
+            rotation: indicates desired robot rotation (if any) as a number: 
+                0 for no rotation, +90 for a 90-degree rotation clockwise, 
+                and -90 for a 90-degree rotation counterclockwise. 
+                Other values will result in no rotation.
+            movement: indicates robot movement, and the robot will attempt 
+                to move the number of indicated squares: a positive number 
+                indicates forwards movement, while a negative number indicates 
+                backwards movement. The robot may move a 
+                maximum of three units per turn. Any excess movement is ignored.
+                
+            If the robot wants to end a run (e.g. during the first training run in
+            the maze) then returing the tuple ('Reset', 'Reset') will indicate to
+            the tester to end the run and return the robot to the start.  
+        """
+        
         rotation = 0
         movement = 0
         
@@ -222,32 +268,115 @@ class Robot(object):
                 return rotation, movement
             
             self.log_location() # store location before its movemenet
-            
-            # Update the heading and location according to the recent movement
-            self.update_heading(rotation, movement)
-            
             # print location and explore maze percentage
             x = self.location[0]
             y = self.location[1]
-            print("Location new: {0} | location_last: {1}".format(self.location, self.location_last))
             self.path_grid[x][y] = 1    
             print("Robot has explored {:04.2f}% of the maze.\n".format(self.explored_percentage()))
             
         elif self.mode == "search":
-            pass
+            self.find_shortest_path()
+            self.start_racing()
         elif self.mode == "race":
-            pass
+            # Race to the goal room on the shortest path through the maze.
+            # The robot still moves iteratively on every call of next_move().
+            rotation, movement = self.race_to_goal()
+            # Perform rotations and movements determined by the racing function
+            # This marks the racing path and logs it to the logfile
+            self.mark_path(self.SHORTEST)
+            self.log_location()
         
         if self.movement_allowed(sensors, rotation, movement) == False:
             # check that intended movement is possible
-            print("ERROR: Robot cannot move in a chosen direction. Stopping the robot", file=stderr)
+            print("ERROR: Robot cannot move in a chosen direction. Stopping the robot. [Heading: {0} | Rotation: {1} | Movement: {2} | Location: {3}]".format(self.heading, rotation, movement, self.location), file=stderr)
             rotation = 0
             movement = 0
+        else:
+            self.update_heading(rotation, movement)
+            print("Location new: {0} | location_last: {1}".format(self.location, self.location_last))
+
 
         return rotation, movement
-    
+    def start_racing(self):
+        """Start the robot's racing mode
+            
+        Args: 
+            None
+        
+        Returns: 
+            None
+        """
+        self.mode = "race"
+        self.step_count = 0
+        self.mark_path(self.SHORTEST)
+        self.log_location()
+        
+    def race_to_goal(self):
+        """Move robot on the shortest path to the goal
+            
+        Args: 
+            None
+        
+        Returns: 
+            rotation, movement
+            - rotation: integer indicating the robot’s rotation on that timestep.
+                taking one of three values: -90, 90, or 0 
+                for counterclockwise, clockwise, or no rotation (in that order)
+            - movement: integer indicating the robot’s movement on that timestep
+                movement follows the rotiation in the range [-3, 3] inclusive     
+        """
+
+        rotation = 0
+        movement = 0
+        
+        # First, collect up to three actions in a line if they are the same
+        actions = []
+        x, y = self.location[0], self.location[1]
+        abort = False
+        while len(actions) < self.max_movement and not abort:
+            current_action = self.policy_grid[x][y]
+
+            if not current_action:
+                abort = True
+            else:
+                actions.append(current_action)
+                dx, dy = self.direction_to_vec[current_action]
+                nx, ny = x + dx, y + dy
+                # Check if the next cell (nx, ny) has the same action.
+                if (0 <= nx < self.maze_dim and
+                        0 <= ny < self.maze_dim and
+                        self.policy_grid[nx][ny] == current_action):
+                    x = nx
+                    y = ny
+                else:
+                    abort = True
+
+        # Secondly, set rotation and movement according to the collected actions
+        rotation = self.direction_to_rotation[self.heading].get(
+            actions[0], 0)
+        movement = len(actions)
+        
+        return rotation, movement
+        
     def movement_allowed(self, sensors, rotation, movement):
-        """Check if the path in the desired direction is blocked."""
+        """Check if desired movement is allowed or blocked by wall
+            
+        Args: 
+            sensors:  three values input from the robot's sensors
+            rotation: integer indicating the robot’s rotation on that timestep.
+                taking one of three values: -90, 90, or 0 
+                for counterclockwise, clockwise, or no rotation (in that order)
+            movement: integer indicating the robot’s movement on that timestep
+                movement follows the rotiation in the range [-3, 3] inclusive 
+        
+        Returns: 
+            True if movement is allowed. False if not.
+            
+        Examples:
+            >>> rotation = 0
+            >>> movement = 1
+            >>> is_movement_allowed = self.movement_allowed(sensors, rotation, movement)
+        """
         if rotation == -90:
             return sensors[0] >= movement
         elif rotation == 90:
@@ -256,9 +385,9 @@ class Robot(object):
             return sensors[1] >= movement
         else:
             return False
+        
     def explore(self, sensors):
-        """Explore a maze using Trémaux' algorithm."""
-        """Tremaux algorithm deciding on the next step
+        """Explore a maze using Trémaux' algorithm
                 
         Args: 
             sensors: list of three int values indicating number of open squares 
@@ -276,7 +405,7 @@ class Robot(object):
             
         Examples:
             >>> sensors=[0, 10, 0]
-            >>> rotation, movement = self.tremaux_algo(sensors)
+            >>> rotation, movement = self.explore(sensors)
         """
         rotation = 0
         movement = 0
@@ -300,13 +429,10 @@ class Robot(object):
 
             return rotation, movement
         
-        # --------------------------------------
-        # Trémaux' algorithm
-        # --------------------------------------
-         # Translate sensor readings into unblocked directions
+        # Translate sensor readings into unblocked directions
         open_directions = self.check_open_directions(sensors)
         # Update the internal mapping of the maze
-        #TODO: self.update_map(open_directions)
+        self.update_map(open_directions)
 
         # --------------------------------------
         # Trémaux' algorithm
@@ -384,59 +510,110 @@ class Robot(object):
                     # robot stepped into already visited junction while NOT backtracking
                     # threat it as dead-end
                     rotation, movement = self.start_backtracking()
-                    # self.mark_path(self.DOUBLE_VISITED)
-                    
-                
-            '''
-            # Robot is at a junction
-            unvisited_paths = self.get_paths(open_directions, self.UNVISITED)
-                     
-            count_unvisitedh_paths = len(unvisited_paths)
-                
-            if self.backtracking == True and count_unvisitedh_paths >= 1:
-                self.print_debug("explore: 1 - STOP backtracking. Junction with unvisited direction. ")
-                self.backtracking = False
-                
-            if count_unvisitedh_paths >= 2:
-                #more than one unvisited path from the junction
-                self.mark_path(self.UNVISITED)
-                
-                # Store the direction to the path which has led to this junction, used for backtracking.
-                self.visited_grid_previous_heading[x][y] = self.opposite[self.heading]
-                rotation, movement = self.follow_path(self.random_path_choice(unvisited_paths))
-                    
-                # Get the adjacent paths that are still unvisited.
-            elif count_unvisitedh_paths == 1:
-                #exactly one unvisited path from the junction
-                self.mark_path(self.VISITED)
-                # Store the direction to the path which has led to this junction, used for backtracking.
-                self.visited_grid_previous_heading[x][y] = self.opposite[self.heading]
-                
-                rotation, movement = self.follow_path(self.random_path_choice(unvisited_paths)) 
-                
-                if self.backtracking == False:
-                    # Store the direction to the path which has led to this junction, used for backtracking.
-                    self.visited_grid_previous_heading[x][y] = self.opposite[self.heading]             
-            else:
-                # This junction has no unvisited paths left,
-                
-                self.mark_path(self.VISITED)
-                
-                if self.backtracking == False:
-                    self.print_debug("explore: 2 - START backtracking. This junction has no unvisited paths left")
-                    rotation, movement = self.start_backtracking()
-                else:
-                    rotation, movement = self.continue_backtracking()
-        '''
+
         self.print_debug("explore: Decided rotation: {0} | Movement: {1} | Visited grid: {2} | Backtracking: {3}".format(rotation, movement, self.visited_grid[self.location[0], self.location[1]], self.backtracking))
         
         return rotation, movement
     
+    def find_shortest_path(self):
+        """Find the shortest path to the  using breadth-first search 
+             and plan robot next actions based on this
+        Args: 
+            None
+        
+        Returns: 
+            None
+        """
+
+        init = [self.location_orig[0], self.location_orig[1]]
+
+        # The center cells which make up the goal room.
+        goal_room = [[self.maze_dim / 2, self.maze_dim / 2],
+                     [self.maze_dim / 2 - 1, self.maze_dim / 2],
+                     [self.maze_dim / 2, self.maze_dim / 2 - 1],
+                     [self.maze_dim / 2 - 1, self.maze_dim / 2 - 1]]
+
+        # This could be used to change the movement costs.
+        cost = 1
+
+        # Connects movement delta vectors and
+        # their corresponding directional actions.
+        delta_to_action = {(0, 1): 'up',
+                           (1, 0): 'right',
+                           (0, -1): 'down',
+                           (-1, 0): 'left'}
+
+        # This grid holds the action delta at every position of the maze.
+        delta_grid = [[(0, 0) for _ in range(self.maze_dim)] for _ in
+                      range(self.maze_dim)]
+
+        # Initialize some values and lists for the search algorithm
+        g = 0
+        open_cells = [[g, init[0], init[1]]]
+        visited = [init]
+        end = []
+
+        # Search through the maze with Dijkstra.
+        while True:
+
+            if not open_cells:
+                break
+
+            open_cells.sort()
+            # Get the cell from the open list with the lowest cost-value (G-Value).
+            g, x, y = open_cells.pop(0)
+
+            if [x, y] in goal_room:
+                # Stop when entering the goal room.
+                end = [x, y]
+                break
+
+            # Check the current position in the maze map for wall openings.
+            # For every wall opening, the corresponding directional delta vector is added
+            # to the deltas list. This essentially creates a list of deltas to cells connected to
+            # the current cell in the map.
+            deltas = []
+            for direction, value in self.wall_values.items():
+                if self.maze_map[x][y] & value != 0:
+                    deltas.append(self.direction_to_vec[direction])
+
+            # Now, loop through all the connected cells
+            for dx, dy in deltas:
+                # Use delta to calculate the coords of the next cell (nx, ny)
+                nx, ny = x + dx, y + dy
+                if [nx, ny] not in visited:
+                    # The next cell is not yet visited
+                    open_cells.append([g + cost, nx, ny])
+                    visited.append([nx, ny])
+                    # Save the action delta vector needed to get to this next cell (nx, ny)
+                    delta_grid[nx][ny] = (dx, dy)
+
+        # Create policy path by travelling from end to start
+        x, y = end
+        self.policy_grid[x][y] = '*'
+        while [x, y] != init:
+            # Apply the previously saved action deltas backwards.
+            nx = x - delta_grid[x][y][0]
+            ny = y - delta_grid[x][y][1]
+            # Save the action string to the policy grid.
+            self.policy_grid[nx][ny] = delta_to_action[delta_grid[x][y]]
+            # Continue with the next position
+            x, y = nx, ny
+        
     def random_path_choice(self, paths):
         """
         Make predictable random path choice, to make robot movement in a known maze predictable
         which simplified analysis
+
+        Args: 
+            paths as tuple
+                with possible values "up" and "right" and "left"
+        
+        Returns: 
+            path as string
+                with possible values: "up" or "right" or "left"
         """
+        
         if "up" in paths:
             return "up"
         
@@ -451,15 +628,29 @@ class Robot(object):
         
 
     def continue_backtracking(self):
-        '''Continue backtracking through a junction.'''
+        """
+        Continue backtracking. Follow the way from which robot came from
+
+        Args: 
+            None
+        
+        Returns: 
+            rotation, movement
+            
+            - rotation: integer indicating the robot’s rotation on that timestep.
+                taking one of three values: -90, 90, or 0 
+                for counterclockwise, clockwise, or no rotation (in that order)
+            - movement: integer indicating the robot’s movement on that timestep
+                movement follows the rotiation in the range [-3, 3] inclusive
+        """
+
         movement = 1
         rotation = 0
         
-        # Get direction in which the previous cell lies, to which we wish to backtrack to.
+        # Get direction to which we wish to backtrack to
         direction = self.visited_grid_previous_heading[self.location[0]][self.location[1]]
         # Translate that direction into a possibly needed rotation of the robot,
-        # considering the current heading.
-        # This sets the rotation to -90, 0 or 90 to face the given direction.
+        # considering the current heading
         rotation = self.direction_to_rotation[self.heading].get(direction,0)
         
         self.print_debug("Continue backtracking | direction: {0} | rotation: {1}".format(direction, rotation))
@@ -468,6 +659,18 @@ class Robot(object):
 
     
     def get_paths(self, open_directions, value):
+        """
+        Return paths possible to take from the junction with a given value
+
+        Args: 
+            open_directions: list of possible directions from the junction
+            value: value of paths to be filtered for 
+             - self.UNVISITED or self.VISITED
+        
+        Returns: 
+            direction_with_value: list of possible directions from the junction
+                with a given value
+        """
         direction_with_value = []
         
         for direction in open_directions:
@@ -480,7 +683,16 @@ class Robot(object):
     def path_is(self, value, x=None, y=None):
         """
         Returns true if the path at the given position has the specified value.
-            If no position parameters are given, checks at the robot's current position."""
+        If no position parameters are given, checks at the robot's current position
+        
+        Args: 
+            value: value agains which the path is tested 
+             - self.UNVISITED or self.VISITED or self.DOUBLE_VISITED
+        
+        Returns: 
+            True if path has given value. False otherwise
+        """
+        
         if x is None:
             x = self.location[0]
         if y is None:
@@ -488,7 +700,22 @@ class Robot(object):
 
         return self.visited_grid[x][y] == value
     def follow_path(self, direction):
-        """Follow path in the given direction."""
+        """Follow path in the given direction.
+
+        Args: 
+            direction: direction in which shall the robot move
+                - "left" or "up" or "right"
+        
+        Returns: 
+           rotation, movement
+            
+            - rotation: integer indicating the robot’s rotation on that timestep.
+                taking one of three values: -90, 90, or 0 
+                for counterclockwise, clockwise, or no rotation (in that order)
+            - movement: integer indicating the robot’s movement on that timestep
+                movement follows the rotiation in the range [-3, 3] inclusive
+        """
+        
         rotation = 0
         movement = 0
         
@@ -509,7 +736,17 @@ class Robot(object):
         return rotation, movement
     
     def mark_path(self, new_value=None):
-        """Mark a traveled path by increasing its value in the path map."""
+        """
+        Mark a traveled path to a specified value. 
+        
+        Args: 
+            new_value: value for the path
+             - self.UNVISITED or self.VISITED or self.DOUBLE_VISITED or self.SHORTEST
+        
+        Returns: 
+            None
+        """
+        
         x = self.location[0]
         y = self.location[1]
         
@@ -524,7 +761,17 @@ class Robot(object):
 
             
     def check_open_directions(self, sensors):
-        """Check which directions are not blocked return them."""
+        """Check which directions are not blocked return them.
+        
+        Args: 
+            sensors: list of three int values indicating number of open squares 
+                in front of the left, center, and right sensors (in that order)
+        
+        Returns: 
+            open_directions
+                - list of directions with possible values "left" and "up" and "right"
+        """
+       
         open_directions = []
         if sensors[0] > 0:
             open_directions.append('left')
@@ -535,7 +782,14 @@ class Robot(object):
         return open_directions
     
     def start_backtracking(self):
-        """Start reversing the robot to perform a 180 degree rotation."""
+        """Start reversing the robot to perform a 180 degree rotation.
+        
+        Args: 
+            None
+        
+        Returns: 
+            None
+        """
         self.is_reversing = True
         self.backtracking = True
         
@@ -545,12 +799,27 @@ class Robot(object):
         return rotation, movement
         
     def finished_exploration(self):
-        """Returns true when the robot is back at the origin."""
+        """Returns true when the robot is back at the origin.
+        
+        Args: 
+            None
+        
+        Returns: 
+            None
+        """
         
         return self.location == self.location_orig
     
     def end_exploration(self):
-        """Stop the robot's exploration mode and reset the run."""
+        """Stop the robot's exploration mode and reset the run.
+        
+        Args: 
+            None
+        
+        Returns: 
+            None
+        """
+        
         print("Robot has reached the origin again. Finishing exploration.")
         # Reset some localization-specific values
         self.heading = "up"
@@ -665,13 +934,13 @@ class Robot(object):
         # update position
         if movement > 0:
             if self.heading == "up":
-                self.location = [x, y+1]
+                self.location = [x, y+movement]
             elif self.heading == "right":
-                self.location = [x+1, y]
+                self.location = [x+movement, y]
             elif self.heading == "left":
-                self.location = [x-1, y]
+                self.location = [x-movement, y]
             elif self.heading == "down":
-                self.location = [x, y-1]
+                self.location = [x, y-movement]
                 
     def get_next_step_coordinates(self, robot_rel_heading, movement):
         """Return coordinates of the next potential move in a given direction

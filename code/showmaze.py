@@ -7,8 +7,7 @@ import argparse
 class MazeVizualization(object): 
     def __init__(self, sq_size, origin):
         """
-        Use the initialization function to set up attributes
-        of the maze you want to visualize
+        set up attributes of the maze to be visualized
         
         Args: 
             sq_size:  int size of each square in the maze
