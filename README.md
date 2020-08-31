@@ -27,7 +27,7 @@ For more details about the project you can check [The Project Blog Post](https:/
 The AI algorithm will explore and map the maze, then find the shortest path, then use the shortest path to race to the destination. 
 
 2. Execute the file `Code\showmaze.py`to visualize the robot movement in the maze
-`python showmaze.py robot_path.json`
+`python showmaze.py test_maze_01.txt robot_path.json`
 
 ## Libraries used
 Python 3
