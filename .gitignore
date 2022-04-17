@@ -1,0 +1,7 @@
+# Files to be ignored
+*.ipynb_checkpoints
+*.log
+
+# Folders to be ignored
+**/__pycache__/**
+**/.vscode/**
