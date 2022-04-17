@@ -1,0 +1,73 @@
+ === Problem 1 - LRU Cache Explanation:  ===
+The cache works with a hash table (dictionary) referencing to linked list (cached objects)
+- To adress the need for a fast look up the hash table (dictionary) was implemented to achieve O(1) time complexity 
+- To adress the need for a fast insertion and deletion the linked object working as list was implemented to achieve O(1) time complexity.
+
+Time and space complexity:
+- get: Time O(1), Space O(1) -> Thanks to our our hash table (dictionary)
+- set: Time O(1), Space O(1) -> Thanks to our linked list
+where n is a cache size
+
+
+ === Problem 2 - File recursion:  ===
+Algorithm goes through each item in selected directory. Files with desired extension are added to the list. 
+Subfolders are searched by recursion call to the same function with updated path.
+ 
+Time and space complexity:
+ - Time  O(n) as each item (file, subfolder) needs to be looped through the cycle
+ - Space O(n) as each file fitting to our criterias needs to be kept in the list. 
+ where n is number of items (files and subfolders) in a folder
+ 
+=== Problem 3 - Hufman coding:  ===
+Algorithm creates and sort frequencies array.
+Then it loops through frequencies, starting with the lowest ones and creates hufman tree by assigning a binary code to each letter.
+Finally, it iterates over each char and encodes it.
+
+Time and space complexity:
+
+Encoding:
+ - Time O(n logn) Sorting in the beginning takes O(n logn), which moves for the rest O(n) operations the overall time complexity to O(n logn) 
+ - Space O(n) as nodes grows with input
+where n is number of input characters
+ 
+ Decoding:
+ - Time O(n) as each char needs to be looped through find_char_from_path 
+ - Space O(n) as nodes grows with input
+ where n is number of characters.
+  
+=== Problem 4 - Active Directory:  ===
+Algorithm check whether use is direct member of a group. If not, it goes recursively through each subgroup till the user is found.
+As member users are unique inside of a specific group, set() structure is used instead of list offering average higher search (x in y) performance O(1) than list O(n) https://wiki.python.org/moin/TimeComplexity
+
+ Time and space complexity:
+ - Time  O(n) as each group and its subgroups needs to be looped through the cycle
+ - Space O(n) as each subgroup will lead to recursion 
+ where n is number of groups
+ 
+ === Problem 5 - Blockchain:  ===
+Blockchain object links to its Blocks. Each Block contains link to hash of its previous block.
+
+ Time and space complexity:
+ - Time  O(1) for adding a new block to blockchain
+ - Space O(n) as each new block needs to be stored to blockchain
+ where n is number of blocks
+ 
+=== Problem 6 - Union and Intersection:  ===  
+For union the algorithm just loops through each item in both lists and add unique values into its output. 
+Unique values are kept in set structure to ensure that the final list contains only unique values.
+   
+For intersection the algorithm loops through each item in list_1 and stores unique values into set structure.
+Then algorithm loops through each item in list_2 and produces final intersection.
+  
+Time and space complexity: 
+ For union:
+  - Time O(n) as it loops through each item
+  - Space O(n) as it stores each unique item
+ where n is number of items in list_1 and list_2 
+ 
+ For intersection:
+  - Time O(n) as it loops through each item
+  - Space O(n) as it stores each unique item and items for which was not yet found match from list_1
+  where n is number of items in list_1 and list_2
+  
+  

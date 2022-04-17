@@ -1,0 +1,83 @@
+=== Run Time Analysis (Worst Case Big O Notation)  for provided solutions === 
+
+Solution to complete Task 0 has:
+    Time complexity:
+        - O(1) as we print the first and the last record, we execute always two prints, no matter how much records we have
+
+
+    Space complexity:
+        - O(1) as we print the first and the last record, we store them to two string variables, no matter how much records we have
+
+
+    Design choice:
+        I prioritize readibility for a user, 
+        so in the first part we store the first record in variable, then the last record one to second variable.
+        Then in the print statement we pass those variables as arguments
+
+Solution to complete Task 1 has:
+    Time complexity:
+        - O(n) as we loop through each record
+
+    Space complexity:
+        - O(n) as in the worst case each new record represents an unique number we need to store
+
+    Design choice:
+        - To store unique numbers,
+           Set structure was used instead of List as it's the most efficient, 
+           and we don't care about order of items to calculate total count of unique numbers.
+           
+            When testing whether we already stored the given number, set works with hash tables,
+            it just looks whether the object is at the position determined by its hash,
+            so the speed of this operation does not depend on the size of the Set.
+            In contrast, for List the whole List would need to be searched,
+            which would provide us with worse performance than with Set structure.
+
+
+    [n = count of records (count of records for calls + count of records for texts)]
+
+
+Solution to complete Task 2 has:
+    Time complexity:
+        - O(n) as we loop through each record  
+        
+    Space complexity:
+        - O(n) as in the worst case each new record represents an unique number we need to store
+    
+    Design choice: 
+        - To store how much time each number spent by calling,
+            Dictionary structure was choosen.  As we store key value pars between phone number and time spent by calling.    
+     
+    [n = count of records (count of records for calls)]
+        
+        
+
+Solution to complete Task 3 has:
+    Time complexity:
+        - `O(n log n)` as  we use `.sort()` function with time complexity [O(n log n)](https://wiki.python.org/moin/TimeComplexity)
+            and in the worst case each new record represents an unique area code we need to store and sort
+            Looping through each record itself has time complexity `O(n)` 
+        
+    Space complexity:
+        - O(n) as in the worst case each new record represents an unique area code we need to store
+        
+    Design choice: 
+        - To store unique area codes,  and later display them in lexicographic order,
+            List structure was choosen, as it allows us to sort list by lexicographic order by calling .sort()
+    
+    [n = count of records (count of records for calls)]
+
+Solution to complete Task 4 has complexity:
+    Time complexity:
+        Time complexity:
+        - `O(n log n)` as  we use `.sort()` function with time complexity [O(n log n)](https://wiki.python.org/moin/TimeComplexity)
+            and in the worst case each new record represents a possible telemarketer we need to store  and sort
+            Looping through each record itself has time complexity `O(n)` 
+            
+    Space complexity:
+        - O(n) as in the worst case each new record represents a possible telemarketer we need to store 
+      
+    Design choice:
+        - To store list of possible telemarketers,  and later display them in lexicographic order,
+            List structure was choosen, as it allows us to sort list by lexicographic order by calling .sort()  
+    
+    [n = count of records (count of records for calls + count of records for texts)]
