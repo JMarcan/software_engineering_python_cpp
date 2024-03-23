@@ -18,7 +18,10 @@ class Game {
  private:
   Snake snake;
   SDL_Point food;
-  std::vector<SDL_Point> obstacles;
+  float dynamic_obstacle_x;
+  float dynamic_obstacle_y;
+  SDL_Point dynamic_obstacle;
+  std::vector<SDL_Point> static_obstacles;
 
   std::random_device dev;
   std::mt19937 engine;
@@ -28,7 +31,8 @@ class Game {
   int score{0};
 
   void PlaceFood();
-  void PlaceObstacle();
+  void PlaceStaticObstacle();
+  void PlaceDynamicObstacle();
   void Update();
 };
 

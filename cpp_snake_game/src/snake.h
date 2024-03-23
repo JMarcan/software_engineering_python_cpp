@@ -7,7 +7,8 @@
 class Snake {
  public:
   enum class Direction { kUp, kDown, kLeft, kRight };
-
+  int grid_width;
+  int grid_height;
   Snake(int grid_width, int grid_height)
       : grid_width(grid_width),
         grid_height(grid_height),
@@ -31,10 +32,8 @@ class Snake {
  private:
   void UpdateHead();
   void UpdateBody(SDL_Point &current_cell, SDL_Point &prev_cell);
-
   bool growing{false};
-  int grid_width;
-  int grid_height;
+  
 };
 
 #endif

@@ -7,6 +7,7 @@ as part of the Udacity C++ Nanodegree.
 ## New Features
 - User score is compared against the best score, the best score is saved into a file
 - Added static obstacles to the game
+- Added dynamic obstacle to the game
 - User can choose starting speed for the game via console input
 
 ## Addressed Rubric Points
@@ -22,12 +23,12 @@ Object Oriented Programming
 -
 -
 
-Memory Management - meet at least 3 criteria
+Memory Management
 - 
 -
 -
 
-Concurrency - meet at least 2 criteria
+Concurrency
 -
 -
 -
