@@ -67,4 +67,5 @@ void store_new_record(const int score) {
   ofstream file("best_score.txt");
   file << score;
   file.close();
+  return;
 }

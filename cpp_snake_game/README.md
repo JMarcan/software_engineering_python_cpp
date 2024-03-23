@@ -5,9 +5,9 @@ as part of the Udacity C++ Nanodegree.
 
 
 ## New Features
-- User can choose starting speed for the game via console input
 - User score is compared against the best score, the best score is saved into a file
-
+- Added static obstacles to the game
+- User can choose starting speed for the game via console input
 
 ## Addressed Rubric Points
 
@@ -53,3 +53,16 @@ Concurrency - meet at least 2 criteria
 2. Make a build directory in the top level directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
 4. Run it: `./SnakeGame`.
+
+
+## CC Attribution-ShareAlike 4.0 International
+Shield: [![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
+
+This work is licensed under a
+[Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
+
+[![CC BY-SA 4.0][cc-by-sa-image]][cc-by-sa]
+
+[cc-by-sa]: http://creativecommons.org/licenses/by-sa/4.0/
+[cc-by-sa-image]: https://licensebuttons.net/l/by-sa/4.0/88x31.png
+[cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg
