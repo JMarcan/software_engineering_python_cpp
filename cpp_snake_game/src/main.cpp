@@ -25,11 +25,14 @@ int main() {
 
   Renderer renderer(kScreenWidth, kScreenHeight, kGridWidth, kGridHeight);
   Controller controller;
+
+  std::cout << "Before game creation\n";
   Game game(kGridWidth, kGridHeight);
+  std::cout << "Before game run\n";
   game.Run(controller, renderer, kMsPerFrame, starting_speed);
 
-  const int previous_best_score = load_previous_record();
-  const int game_score = game.GetScore();
+  int const previous_best_score = load_previous_record();
+  int const game_score = game.GetScore();
 
   std::cout << "Game has terminated successfully!\n";
   std::cout << "Your score: " << game_score << "\n";

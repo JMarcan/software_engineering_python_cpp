@@ -6,6 +6,7 @@
 #include "controller.h"
 #include "renderer.h"
 #include "snake.h"
+#include "obstacle.h"
 
 class Game {
  public:
@@ -17,14 +18,12 @@ class Game {
 
  private:
   Snake snake;
+  std::vector<StaticObstacle> static_obstacles;
+  std::vector<DynamicObstacle> dynamic_obstacles;
   SDL_Point food;
-  float dynamic_obstacle_x;
-  float dynamic_obstacle_y;
-  SDL_Point dynamic_obstacle;
-  std::vector<SDL_Point> static_obstacles;
 
-  std::random_device dev;
-  std::mt19937 engine;
+  std::random_device device;
+  std::mt19937 generator;
   std::uniform_int_distribution<int> random_w;
   std::uniform_int_distribution<int> random_h;
 
@@ -32,7 +31,6 @@ class Game {
 
   void PlaceFood();
   void PlaceStaticObstacle();
-  void PlaceDynamicObstacle();
   void Update();
 };
 

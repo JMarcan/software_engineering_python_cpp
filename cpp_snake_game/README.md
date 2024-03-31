@@ -13,18 +13,20 @@ as part of the Udacity C++ Nanodegree.
 ## Addressed Rubric Points
 
 Loops, Functions, I/O
-- User can choose starting speed for the game via console input
+- New functionalities are organized in functions
 - The best score is saved into a file
 - The best score is loaded from the file, compared against the user score, and if user set a new record it's stored in the file 
-- New functionalities are organized in functions
+- Project uses vectors to store objects for obstacles
+- User can choose starting speed for the game via console input
 
 Object Oriented Programming
--
--
--
+- Added new classes for obstacles
+- Classes utilize member initialization lists
+- Classes abstract implementation details from their interfaces
+- Inheritance hierarchy for StaticObstacle and DynamicObstacle class with virtual class Obstacle
 
 Memory Management
-- 
+- Using pass-by-reference in classes for obstacles
 -
 -
 

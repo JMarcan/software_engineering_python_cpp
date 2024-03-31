@@ -6,16 +6,13 @@ void Snake::Update() {
   SDL_Point prev_cell{
       static_cast<int>(head_x),
       static_cast<int>(
-          head_y)};  // We first capture the head's cell before updating.
+          head_y)};  // We first capture the previous head's cell before updating.
   UpdateHead();
-  SDL_Point current_cell{
-      static_cast<int>(head_x),
-      static_cast<int>(head_y)};  // Capture the head's cell after updating.
 
   // Update all of the body vector items if the snake head has moved to a new
   // cell.
-  if (current_cell.x != prev_cell.x || current_cell.y != prev_cell.y) {
-    UpdateBody(current_cell, prev_cell);
+  if (head.x != prev_cell.x || head.y != prev_cell.y) {
+    UpdateBody(prev_cell);
   }
 }
 
@@ -41,9 +38,11 @@ void Snake::UpdateHead() {
   // Wrap the Snake around to the beginning if going off of the screen.
   head_x = fmod(head_x + grid_width, grid_width);
   head_y = fmod(head_y + grid_height, grid_height);
+  head.x = static_cast<int>(head_x);
+  head.y = static_cast<int>(head_y);
 }
 
-void Snake::UpdateBody(SDL_Point &current_head_cell, SDL_Point &prev_head_cell) {
+void Snake::UpdateBody(SDL_Point &prev_head_cell) {
   // Add previous head location to vector
   body.push_back(prev_head_cell);
 
@@ -57,7 +56,7 @@ void Snake::UpdateBody(SDL_Point &current_head_cell, SDL_Point &prev_head_cell) 
 
   // Check if the snake has hit itself
   for (auto const &item : body) {
-    if (current_head_cell.x == item.x && current_head_cell.y == item.y) {
+    if (head.x == item.x && head.y == item.y) {
       alive = false;
       break;
     }
@@ -66,9 +65,8 @@ void Snake::UpdateBody(SDL_Point &current_head_cell, SDL_Point &prev_head_cell) 
 
 void Snake::GrowBody() { growing = true; }
 
-// Inefficient method to check if cell is occupied by snake.
 bool Snake::SnakeCell(int x, int y) {
-  if (x == static_cast<int>(head_x) && y == static_cast<int>(head_y)) {
+  if (x == head.x && y == head.y) {
     return true;
   }
   for (auto const &item : body) {
@@ -78,3 +76,6 @@ bool Snake::SnakeCell(int x, int y) {
   }
   return false;
 }
+
+int Snake::GridWidth() const { return grid_width; }
+int Snake::GridHeight() const { return grid_height; }

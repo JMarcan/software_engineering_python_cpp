@@ -1,28 +1,42 @@
 #include "game.h"
 #include <iostream>
 #include "SDL.h"
+#include "obstacle.h"
 
 Game::Game(std::size_t grid_width, std::size_t grid_height)
-    : snake(grid_width, grid_height),
-      engine(dev()),
-      random_w(0, static_cast<int>(grid_width - 1)),
-      random_h(0, static_cast<int>(grid_height - 1)) {
-  PlaceStaticObstacle();
-  PlaceStaticObstacle();
-  PlaceStaticObstacle();
-  PlaceDynamicObstacle();
-  PlaceFood();
+  : snake(grid_width, grid_height),
+    generator(device()),
+    random_w(0, static_cast<int>(grid_width - 1)),
+    random_h(0, static_cast<int>(grid_height - 1)) {
+
+    // create static obstacles
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
+
+    // create dynamic obstacles
+    dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake.head, static_obstacles, dynamic_obstacles));
+    dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake.head, static_obstacles, dynamic_obstacles));
+      
+    // place food
+    PlaceFood();
 }
 
 void Game::Run(Controller const &controller, Renderer &renderer,
-               std::size_t target_frame_duration, float starting_speed) {
+               std::size_t target_frame_duration, const float starting_speed) {
   Uint32 title_timestamp = SDL_GetTicks();
   Uint32 frame_start;
   Uint32 frame_end;
   Uint32 frame_duration;
   int frame_count = 0;
   bool running = true;
+
+  // set starting speed for snake and dynamic obstacles
   snake.speed = starting_speed;
+  for (auto &item : dynamic_obstacles) {
+    item.SetSpeed(starting_speed);
+  }
 
   while (running) {
     frame_start = SDL_GetTicks();
@@ -30,7 +44,7 @@ void Game::Run(Controller const &controller, Renderer &renderer,
     // Input, Update, Render - the main game loop.
     controller.HandleInput(running, snake);
     Update();
-    renderer.Render(snake, food, static_obstacles, dynamic_obstacle);
+    renderer.Render(snake, food, static_obstacles, dynamic_obstacles);
 
     frame_end = SDL_GetTicks();
 
@@ -58,15 +72,15 @@ void Game::Run(Controller const &controller, Renderer &renderer,
 void Game::PlaceFood() {
   int x, y;
   while (true) {
-    x = random_w(engine);
-    y = random_h(engine);
+    x = random_w(generator);
+    y = random_h(generator);
     // Check that the location is not occupied by a snake before placing food
     if (snake.SnakeCell(x, y)) 
       continue;
 
-    // Check that the location is not occupied by an obstacle before placing food
+    // Check that the location is not occupied by a static obstacle before placing food
     for (auto const &item : static_obstacles) {
-      if (x == item.x && y == item.y) 
+      if (x == item.GetPositionX() && y == item.GetPositionY()) 
         continue;
       }
 
@@ -76,85 +90,48 @@ void Game::PlaceFood() {
   }
 }
 
-void Game::PlaceStaticObstacle() {
-  int x, y;
-  while (true) {
-    x = random_w(engine);
-    y = random_w(engine);
-
-    // Check that the location is not occupied by a snake before placing a static obstacle
-    if (snake.SnakeCell(x, y))
-      continue;
-    
-    SDL_Point obstacle = {x, y};
-    static_obstacles.push_back(obstacle);
-    return;
-  }
-}
-
-void Game::PlaceDynamicObstacle() {
-  int x, y;
-  while (true) {
-    x = random_w(engine);
-    y = random_w(engine);
-
-    // Check that the location is not occupied by a snake before placing a static obstacle
-    if (snake.SnakeCell(x, y))
-      continue;
-
-    // Check that the location is not occupied by a static obstacle before placing a dynamic obstacle
-    for (auto const &item : static_obstacles) {
-      if (x == item.x && y == item.y) 
-        continue;
-    } 
-
-    dynamic_obstacle  = SDL_Point{x, y};
-    return;
-  }
-
-}
-
 void Game::Update() {
   if (!snake.alive) return;
 
-  // Update dynamic obstacle position
-  dynamic_obstacle_x += snake.speed;
-  // Wrap the dynamic obstacle around to the beginning if going off of the screen.
-  dynamic_obstacle.x = fmod(dynamic_obstacle_x, snake.grid_width);
+  // Update position of dynamic obstacles
+  for (auto &item : dynamic_obstacles) {
+    item.Update(snake.GridWidth(), snake.GridHeight());
+  }
 
-  // Uddate snake position
+  // Uddate position of snake
   snake.Update();
-
-  int snake_new_x = static_cast<int>(snake.head_x);
-  int snake_new_y = static_cast<int>(snake.head_y);
 
   // Check if the snake has hit one of static obstacles
   for (auto const &item : static_obstacles) {
-    if (snake_new_x == item.x && snake_new_y == item.y) {
+    if (snake.head.x == item.GetPositionX() && snake.head.y == item.GetPositionY()) {
       snake.alive = false;
       return;
     }
   }
 
-  // Check if the snake has hit the dynamic obstacle
-  if (snake_new_x == dynamic_obstacle.x && snake_new_y == dynamic_obstacle.y) {
+  // Check if the snake has hit or was hit by one of the dynamic obstacle
+  for (auto const &item : dynamic_obstacles) {
+    if (snake.head.x == item.GetPositionX() && snake.head.y == item.GetPositionY()) {
       snake.alive = false;
       return;
-  }
-
-  // Check if the snake's body has been hit by the dynamic obstacle
-  if (snake.SnakeCell(dynamic_obstacle.x, dynamic_obstacle.y)) {
+    }
+    if (snake.SnakeCell(item.GetPositionX(), item.GetPositionY())) {
       snake.alive = false;
       return;
-  }
+    }
+  }   
 
   // Check if there's food over here
-  if (food.x == snake_new_x && food.y == snake_new_y) {
+  if (food.x == snake.head.x && food.y == snake.head.y) {
     score++;
     PlaceFood();
     // Grow snake and increase speed.
     snake.GrowBody();
     snake.speed += 0.02;
+    // Update speed of dynamic obstacles
+    for (auto &item : dynamic_obstacles) {
+      item.SetSpeed(snake.speed);
+    }
   }
 }
 
