@@ -5,35 +5,28 @@ as part of the Udacity C++ Nanodegree.
 
 
 ## New Features
+- Added AI snake navigating via simple heuristic
+- Added moving obstacles
+- Added static obstacles
 - User score is compared against the best score, the best score is saved into a file
-- Added static obstacles to the game
-- Added dynamic obstacle to the game
 - User can choose starting speed for the game via console input
 
 ## Addressed Rubric Points
+- 1. Processing console input, to allow user choose starting speed
+- 2. Reading and writing data from file, to store the best score
+- 3. Using vectors to store objects for obstacles
+- 4. Organizing new functionalities into functions and controlling workflow via control structures
+- 6. Adding new classes, to manage obstacles and ai snake
+- 7. Utilizing in classes member initialization lists
+- 8. Abstracting implementation details in classes from their interfaces
+- 9. Utilizing inheritance hierarchy, to define interface for StaticObstacle and DynamicObstacle via virtual base class Obstacle
+- 10. Using constant variables to avoid unexpected changes in underlaying objects
+- 11. Using Pass-by-reference to optimize memory consumtion and performance, for example when creating obstacles
 
-Loops, Functions, I/O
-- New functionalities are organized in functions
-- The best score is saved into a file
-- The best score is loaded from the file, compared against the user score, and if user set a new record it's stored in the file 
-- Project uses vectors to store objects for obstacles
-- User can choose starting speed for the game via console input
-
-Object Oriented Programming
-- Added new classes for obstacles
-- Classes utilize member initialization lists
-- Classes abstract implementation details from their interfaces
-- Inheritance hierarchy for StaticObstacle and DynamicObstacle class with virtual class Obstacle
-
-Memory Management
-- Using pass-by-reference in classes for obstacles
--
--
-
-Concurrency
--
--
--
+## Potential improvements
+- Multithreading can be added and rendering, user input handling, and game updates could be processed in parallel.
+  Sadly, Udacity environment haven't worked with the thread library where the linker consistently throwed undefined reference to symbol 'pthread_create@@HLIBC_2.2.5'
+  so multithreading was not adopted during this project.
 
 ## Dependencies for Running Locally
 * cmake >= 3.7
@@ -56,16 +49,3 @@ Concurrency
 2. Make a build directory in the top level directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
 4. Run it: `./SnakeGame`.
-
-
-## CC Attribution-ShareAlike 4.0 International
-Shield: [![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
-
-This work is licensed under a
-[Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
-
-[![CC BY-SA 4.0][cc-by-sa-image]][cc-by-sa]
-
-[cc-by-sa]: http://creativecommons.org/licenses/by-sa/4.0/
-[cc-by-sa-image]: https://licensebuttons.net/l/by-sa/4.0/88x31.png
-[cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg

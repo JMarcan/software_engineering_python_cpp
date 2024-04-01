@@ -1,6 +1,5 @@
-#include "obstacle.h"
 #include <random>
-#include <iostream>
+#include "obstacles.h"
 
 SDL_Point Obstacle::GetPosition() const { return position; }
 int Obstacle::GetPositionX() const { return position.x; }
@@ -13,7 +12,7 @@ StaticObstacle::StaticObstacle(std::random_device &device, int const grid_width,
     int x, y;
     while (true) {
         x = random_w(generator);
-        y = random_w(generator);
+        y = random_h(generator);
 
         // Check that the location is not occupied by a snake before placing a static obstacle
         if (x == snake_location_to_avoid.x && y == snake_location_to_avoid.y)
@@ -37,7 +36,7 @@ StaticObstacle::StaticObstacle(std::random_device &device, int const grid_width,
     int x, y;
     while (true) {
         x = random_w(generator);
-        y = random_w(generator);
+        y = random_h(generator);
 
         // Check that the location is not occupied by a snake before placing a static obstacle
         if (x == snake_location_to_avoid.x && y == snake_location_to_avoid.y)

@@ -1,23 +1,26 @@
-#include "game.h"
 #include <iostream>
 #include "SDL.h"
-#include "obstacle.h"
+#include "game.h"
+#include "snake.h"
+#include "snake_ai.h"
+#include "obstacles.h"
 
 Game::Game(std::size_t grid_width, std::size_t grid_height)
-  : snake(grid_width, grid_height),
+  : snake_user(grid_width, grid_height, grid_width/2, grid_height/2),
+    snake_ai(grid_width, grid_height, 0.0, 0.0),
     generator(device()),
     random_w(0, static_cast<int>(grid_width - 1)),
     random_h(0, static_cast<int>(grid_height - 1)) {
 
     // create static obstacles
-    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
-    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
-    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
-    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles));
+    static_obstacles.push_back(StaticObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles));
 
     // create dynamic obstacles
-    dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake.head, static_obstacles, dynamic_obstacles));
-    dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake.head, static_obstacles, dynamic_obstacles));
+    // dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles, dynamic_obstacles));
+    // dynamic_obstacles.push_back(DynamicObstacle(device, grid_width, grid_height, snake_user.head, static_obstacles, dynamic_obstacles));
       
     // place food
     PlaceFood();
@@ -33,7 +36,8 @@ void Game::Run(Controller const &controller, Renderer &renderer,
   bool running = true;
 
   // set starting speed for snake and dynamic obstacles
-  snake.speed = starting_speed;
+  snake_user.speed = starting_speed;
+  snake_ai.speed = starting_speed;
   for (auto &item : dynamic_obstacles) {
     item.SetSpeed(starting_speed);
   }
@@ -42,9 +46,10 @@ void Game::Run(Controller const &controller, Renderer &renderer,
     frame_start = SDL_GetTicks();
 
     // Input, Update, Render - the main game loop.
-    controller.HandleInput(running, snake);
+    controller.HandleInput(running, snake_user);
+    snake_ai.DecideNextMove(snake_ai, food, static_obstacles, dynamic_obstacles);
     Update();
-    renderer.Render(snake, food, static_obstacles, dynamic_obstacles);
+    renderer.Render(snake_user, food, static_obstacles, dynamic_obstacles, snake_ai);
 
     frame_end = SDL_GetTicks();
 
@@ -75,7 +80,7 @@ void Game::PlaceFood() {
     x = random_w(generator);
     y = random_h(generator);
     // Check that the location is not occupied by a snake before placing food
-    if (snake.SnakeCell(x, y)) 
+    if (snake_user.SnakeCell(x, y) or snake_ai.SnakeCell(x, y)) 
       continue;
 
     // Check that the location is not occupied by a static obstacle before placing food
@@ -91,49 +96,73 @@ void Game::PlaceFood() {
 }
 
 void Game::Update() {
-  if (!snake.alive) return;
+  if (!snake_user.alive) return;
 
   // Update position of dynamic obstacles
   for (auto &item : dynamic_obstacles) {
-    item.Update(snake.GridWidth(), snake.GridHeight());
+    item.Update(snake_user.GridWidth(), snake_user.GridHeight());
   }
 
-  // Uddate position of snake
-  snake.Update();
+  // Uddate snake_user and snake_ai position
+  snake_user.Update();
+  snake_ai.Update();
 
-  // Check if the snake has hit one of static obstacles
+  // Check if the snake_user and snake_ai has hit one of static obstacles
   for (auto const &item : static_obstacles) {
-    if (snake.head.x == item.GetPositionX() && snake.head.y == item.GetPositionY()) {
-      snake.alive = false;
-      return;
+    if (snake_user.head.x == item.GetPositionX() && snake_user.head.y == item.GetPositionY()) {
+      snake_user.alive = false;
+      return; // end the game if user died
+    }
+    if (snake_ai.head.x == item.GetPositionX() && snake_ai.head.y == item.GetPositionY()) {
+      snake_ai.alive = false;
     }
   }
 
-  // Check if the snake has hit or was hit by one of the dynamic obstacle
+  // Check if the snake_user and snake_ai has hit or was hit by one of the dynamic obstacle
   for (auto const &item : dynamic_obstacles) {
-    if (snake.head.x == item.GetPositionX() && snake.head.y == item.GetPositionY()) {
-      snake.alive = false;
-      return;
+    if (snake_user.SnakeCell(item.GetPositionX(), item.GetPositionY())) {
+      snake_user.alive = false;
+      return; // end the game if user died
     }
-    if (snake.SnakeCell(item.GetPositionX(), item.GetPositionY())) {
-      snake.alive = false;
-      return;
+    if (snake_ai.SnakeCell(item.GetPositionX(), item.GetPositionY())) {
+      snake_ai.alive = false;
     }
-  }   
+  }  
 
-  // Check if there's food over here
-  if (food.x == snake.head.x && food.y == snake.head.y) {
-    score++;
-    PlaceFood();
-    // Grow snake and increase speed.
-    snake.GrowBody();
-    snake.speed += 0.02;
-    // Update speed of dynamic obstacles
-    for (auto &item : dynamic_obstacles) {
-      item.SetSpeed(snake.speed);
-    }
+  // // Check if the snake_user has hit itself
+  // if (snake_user.SnakeCell(snake_user.head.x, snake_user.head.y)) {
+  //     snake_user.alive = false;
+  //     return; // end the game if user died
+  // }
+  
+  // Check if the snake_user has hit the snake_ai
+  if (snake_user.head.x == snake_ai.head.x && snake_user.head.y == snake_ai.head.y) {
+      snake_user.alive = false;
+      snake_ai.alive = false;
+      return;
   }
-}
 
+  //Check if the snake_user was hit by the snake_ai
+  if (snake_ai.SnakeCell(snake_user.head.x, snake_user.head.y)) {
+      snake_user.alive = false;
+      snake_ai.alive = false;
+      return; // end the game if user died
+  }
+
+  // Check if the snake_user entered food field
+  if (food.x == snake_user.head.x && food.y == snake_user.head.y) {
+    score++;
+    EatFood(snake_user);
+  }
+  // Check if the snake_ai entered food field
+  else if (food.x == snake_ai.head.x && food.y == snake_user.head.y)
+    EatFood(snake_ai);
+}
+void Game::EatFood(Snake &snake) {
+  PlaceFood();
+  // Grow snake_user and increase speed.
+  snake.GrowBody();
+  snake.speed += 0.02;
+}
 int Game::GetScore() const { return score; }
-int Game::GetSize() const { return snake.size; }
+int Game::GetSize() const { return snake_user.size; }

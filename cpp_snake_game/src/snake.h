@@ -7,11 +7,13 @@
 class Snake {
  public:
   enum class Direction { kUp, kDown, kLeft, kRight };
-  Snake(int grid_width, int grid_height) {
+  Snake(int const grid_width, int const grid_height, float const start_pos_x, float const start_pos_y) {
 	  this->grid_width = grid_width;
     this->grid_height = grid_height;
-    head_x = grid_width / 2;
-    head_y = grid_height / 2;
+
+    head_x = start_pos_x;
+    head_y = start_pos_y;
+
     head = SDL_Point{static_cast<int>(head_x), static_cast<int>(head_y)};
   }
 

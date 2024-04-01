@@ -4,7 +4,7 @@
 #include <vector>
 #include "SDL.h"
 #include "snake.h"
-#include "obstacle.h"
+#include "obstacles.h"
 
 class Renderer {
  public:
@@ -12,7 +12,7 @@ class Renderer {
            const std::size_t grid_width, const std::size_t grid_height);
   ~Renderer();
 
-  void Render(const Snake &snake, const SDL_Point &food, const std::vector<StaticObstacle> &static_obstacles, const std::vector<DynamicObstacle> &dynamic_obstacles);
+  void Render(const Snake &snake, const SDL_Point &food, const std::vector<StaticObstacle> &static_obstacles, const std::vector<DynamicObstacle> &dynamic_obstacles, const Snake &snake_ai);
   void UpdateWindowTitle(int score, int fps);
 
  private:

@@ -6,7 +6,8 @@
 #include "controller.h"
 #include "renderer.h"
 #include "snake.h"
-#include "obstacle.h"
+#include "snake_ai.h"
+#include "obstacles.h"
 
 class Game {
  public:
@@ -17,7 +18,8 @@ class Game {
   int GetSize() const;
 
  private:
-  Snake snake;
+  Snake snake_user;
+  Snake snake_ai;
   std::vector<StaticObstacle> static_obstacles;
   std::vector<DynamicObstacle> dynamic_obstacles;
   SDL_Point food;
@@ -30,6 +32,7 @@ class Game {
   int score{0};
 
   void PlaceFood();
+  void EatFood(Snake &snake);
   void PlaceStaticObstacle();
   void Update();
 };

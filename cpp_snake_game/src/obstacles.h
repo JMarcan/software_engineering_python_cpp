@@ -1,5 +1,5 @@
-#ifndef OBSTACLE_H
-#define OBSTACLE_H
+#ifndef OBSTACLES_H
+#define OBSTACLES_H
 
 #include <random>
 #include "SDL.h"
@@ -31,7 +31,5 @@ class DynamicObstacle: virtual public Obstacle {
         float float_position_y;
         float speed{0.1f};
 };
-
-
 
 #endif

@@ -1,6 +1,6 @@
-#include "snake.h"
+#include <vector>
 #include <cmath>
-#include <iostream>
+#include "snake.h"
 
 void Snake::Update() {
   SDL_Point prev_cell{
@@ -52,14 +52,6 @@ void Snake::UpdateBody(SDL_Point &prev_head_cell) {
   } else {
     growing = false;
     size++;
-  }
-
-  // Check if the snake has hit itself
-  for (auto const &item : body) {
-    if (head.x == item.x && head.y == item.y) {
-      alive = false;
-      break;
-    }
   }
 }
 
