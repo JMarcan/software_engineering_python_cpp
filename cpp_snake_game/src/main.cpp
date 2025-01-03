@@ -51,7 +51,10 @@ float get_starting_speed(){
   string buffer;
   cout << "Choose the starting speed: (default: 0.1)\n";
   getline(cin, buffer);
-  return stof(buffer);
+  if (!buffer.empty()) {
+    return stof(buffer);
+  }
+  return 0.1;
 }
 
 int load_previous_record() {
