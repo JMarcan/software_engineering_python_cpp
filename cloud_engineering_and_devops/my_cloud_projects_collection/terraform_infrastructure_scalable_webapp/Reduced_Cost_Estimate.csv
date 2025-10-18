@@ -1,0 +1,33 @@
+Group hierarchy,Region,Description,Service,Upfront,Monthly,First 12 months total,Currency,Configuration summary
+My Estimate,US East (N. Virginia),,Amazon Virtual Private Cloud (VPC),0,958.7,5794.20,USD,Number of NAT Gateways (2)
+My Estimate,US East (N. Virginia),load balancers,Application Load Balancer,0,1200.85,14410.20,USD,Number of Application Load Balancers (2)
+My Estimate,US East (N. Virginia),web apps,Amazon EC2,0,379.79,4557.48,USD,"Operating system (Linux), Quantity (6), Pricing strategy (Compute Savings Plans 3 Year No Upfront), Storage amount (30 GB), Instance type (t3.xlarge)"
+My Estimate,US East (N. Virginia),application servers,Amazon EC2,0,379.79,4557.48,USD,"Operating system (Linux), Quantity (6), Pricing strategy (Compute Savings Plans 3 Year No Upfront), Storage amount (30 GB), Instance type (t3.xlarge)"
+My Estimate,US East (N. Virginia),,S3 Standard,0,500,6000.00,USD,S3 Standard storage (10000 GB per month)
+My Estimate,US East (N. Virginia),,Data Transfer,0,0,0.00,USD,
+My Estimate,US East (N. Virginia),,Amazon RDS for PostgreSQL,0,2669.94,32039.28,USD,"Quantity (1), Pricing strategy (Standard Reserved Instances 1 Year No Upfront), Storage volume (General Purpose SSD (gp2)), Storage amount (30 GB per month), Instance type (db.m5.8xlarge)"
+My Estimate,US East (N. Virginia),,Amazon CloudWatch,0,125.0451,1500.54,USD,"Number of Metrics (includes detailed and custom metrics) (100), Standard Logs: Data Ingested (10 GB), Number of Custom/Cross-account events (100), Number of Dashboards (30)"
+My Estimate,US East (N. Virginia),,Amazon Elastic IP,0,0,0.00,USD,"Number of EC2 instances (2), Number of EIPs per instance (1)"
+,,,,Total,6214,,,
+,,,,,,,,
+Acknowledgement,,,,,,,,"Rationale
+
+To adress budget restrictions changing from 9 000 USD to 6 500 USD / monthly
+With resulting total cost of 6 214 USD / month:
+
+I) 12 EC2 Instances were downdgraded to t3.xlarge (Memory: 8GiB, vCPU: 2) costing 759,58 USD / month 
+    from t3.2xlarge (Memory: 32GiB, vCPU: 8) costing 1863,34 USD / month | 
+    By keeping the same amount of available servers, application can still serve to its 50k users when demand is high.
+    However the latency can be slightly slower than with initial configuration.
+
+II) EC2 price was further reduced by reserving 3-year computing capacity
+As the company intention is operate applicaiton long term, 
+3 years commitment to computing capacity allows company get better pricing 
+and still keep flexibility to upgrade machines any time.
+  
+III)DB server was reduced to  db.m5.8xlarge (Memory: 128GiB, vCPU: 32) costing 2,670 USD / month 
+    from  db.m5.8xlarge (Memory: 192GiB, vCPU: 48) costing 4,002 USD / month
+    Application can still serve to its 50k users when demand is high,
+    However the latency can be slightly slower than with initial configuration.
+"
+"* AWS Pricing Calculator provides only an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",,,,,,,,

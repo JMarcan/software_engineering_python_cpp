@@ -1,0 +1,28 @@
+Based on the architecture diagram, and the steps you have taken so far to upload data and access the application web service, identify at least 2 obvious poor practices as it relates to security
+
+# Poor practise 1:
+The IAM role policy attached to EC2 instancs allow full access to all S3 buckets.
+That can attacker here exploit to get via instances access to bucket with secret recipe vault.
+Violation of the least privilege principle. 
+
+# Poor practise 2:
+S3 bucket has not enabled server-side encryption.
+If attacker gets to them, he can easily read all data stored there.
+
+# Poor practise 3:
+WebAppSG has 5000 and 80 ports opened.
+This means unecrypted HTTP communication for end users.
+Tt should be configured with 443 HTTPS port encrypting the communication.
+
+# Poor practise 4:
+No restrictive ACL rules are configured.
+For example EC2 instances route tables has DesinationCidrBlock defined as 0.0.0.0/0
+This means that attacker can connect to any machine within VPC or outside of VPC.
+
+# Poor practise 5:
+EC2 instance for web server is placed behind load balancer, but still located in public subnet accesible to attackers.
+This instance is retrieving data from S3.
+Safer option would be to move this EC2 instance to the private subnet so attacker has no direct access to it.
+
+
+

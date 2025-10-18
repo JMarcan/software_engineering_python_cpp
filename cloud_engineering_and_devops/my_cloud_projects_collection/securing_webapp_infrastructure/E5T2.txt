@@ -1,0 +1,28 @@
+# Identify tools that will allow you to do the following:
+
+## Scan infrastructure as code templates
+- Tool: TFSec, TFLint
+
+### Example vulnerability detected by TFSec
+- Ingress open to 0.0.0.0/0
+- Unecrypted S3 bucket
+
+In addition TFLint checks for things as:
+- Invalid instance type
+- Not existing AMI provided
+- Not existing security group referenced
+
+##Scan AMI’s or containers for OS vulnerabilities
+- Tool: Clair
+
+### Example vulnerability
+- Publicly known vulnerabilities and exposures (CVE)
+- For example: CVE-2018-6954 | https://security-tracker.debian.org/tracker/CVE-2018-6954 | Description: systemd-tmpfiles in systemd through 237 mishandles symlinks present in non-terminal path components, which allows local users to obtain ownership of arbitrary files via vectors involving creation of a directory and a file under that directory, and later replacing that directory with a symlink. This occurs even if the fs.protected_symlinks sysctl is turned on.
+
+##Scan an AWS environment for cloud configuration vulnerabilities
+- Tool: AWS Security Hub 
+AWS Security Hub centralize findings from AWS security tools (AWS config, AWS Inspector for network,  ...)
+
+### Example vulnerability
+- Ensure the default security group of every VPC restricts all traffic
+- Ensure IAM password policy prevents password reuse

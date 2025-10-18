@@ -1,0 +1,22 @@
+Group hierarchy,Region,Description,Service,Upfront,Monthly,First 12 months total,Currency,Configuration summary
+My Estimate,US East (N. Virginia),,Amazon Virtual Private Cloud (VPC),0,958.7,5794.20,USD,Number of NAT Gateways (2)
+My Estimate,US East (N. Virginia),load balancers,Application Load Balancer,0,1200.85,14410.20,USD,Number of Application Load Balancers (2)
+My Estimate,US East (N. Virginia),web apps,Amazon EC2,0,4275.05,51300.60,USD,"Operating system (Linux), Quantity (24), Pricing strategy (Compute Savings Plans 1 Year No Upfront), Storage amount (30 GB), Instance type (t3.2xlarge)"
+My Estimate,US East (N. Virginia),application servers,Amazon EC2,0,4275.05,51300.60,USD,"Operating system (Linux), Quantity (24), Pricing strategy (Compute Savings Plans 1 Year No Upfront), Storage amount (30 GB), Instance type (t3.2xlarge)"
+My Estimate,US East (N. Virginia),,S3 Standard,0,500,6000.00,USD,S3 Standard storage (10000 GB per month)
+My Estimate,US East (N. Virginia),,Data Transfer,0,0,0.00,USD,
+My Estimate,US East (N. Virginia),,Amazon CloudWatch,0,125.0451,1500.54,USD,"Number of Metrics (includes detailed and custom metrics) (100), Standard Logs: Data Ingested (10 GB), Number of Custom/Cross-account events (100), Number of Dashboards (30)"
+My Estimate,US East (N. Virginia),,Amazon Aurora PostgreSQL-Compatible DB,0,8472.599999999999,101671.20,USD,"Storage amount (15000 GB), Additional backup storage (15000 GB)"
+My Estimate,US East (N. Virginia),,Amazon Elastic IP,0,0,0.00,USD,"Number of EC2 instances (2), Number of EIPs per instance (1)"
+,,,,Total,19807,,,
+,,,,,,,,"Rationale
+
+For higher budget rising from 9000 USD to 20 000 USD
+- Max number of EC2 instances was increased to 24 
+   Offering scalable 2x redundancy for peak loads to be able to handle even more users
+- EC2 instances were increased to t3.2xlarge (Memory: 32GiB, vCPU: 8)
+  - To decrease processing request time for each user and offer slighly better user experience
+- As DB server is used serverless Aurora DB 
+    With automated scaling to offer fast response at any loads"
+Acknowledgement,,,,,,,,
+"* AWS Pricing Calculator provides only an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",,,,,,,,

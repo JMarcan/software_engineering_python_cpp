@@ -1,0 +1,238 @@
+Description: >
+  High-Avaibility Web App for Udacity CloudDevOps Nanodegree, Project 2 using CloudFormation,
+  This template creates application servers infrastructure stack
+
+# --------- 
+# Inputs
+# --------- 
+Parameters:
+    ProjectName:
+        Type: String
+    ServerInstanceType:
+        Description: Application Servers Instance Type
+        Type: String
+        Default: t2.micro
+    AppServerImageID:
+        Description: Application Servers ImageId | Default is Ubuntu 18.04
+        Type: String
+        Default: ami-005bdb005fb00e791
+    AppServerKeyPair:
+        Description: Name of ssh_key to access app server instances
+        Type: String
+
+Resources:
+# --------- 
+# S3 with binaries
+# --------- 
+    WebAppS3ReadOnlyEC2:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: WebAppS3BinariesReadOnlyEC2
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: "Allow"
+                      Principal:
+                        Service:
+                            - "ec2.amazonaws.com"
+                      Action:
+                        - "sts:AssumeRole"
+            Policies:
+                - PolicyName: "S3BinariesReadOnlyAccess"
+                  PolicyDocument: 
+                    Version: "2012-10-17"
+                    Statement:
+                        - Effect: "Allow"
+                          Action:
+                            - "s3:GetObject"
+                          Resource: "arn:aws:s3:::uda-p2-857459324715947/*" 
+# --------- 
+# Application EC2 Autoscaling Group 
+# --------- 
+    WSInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Roles:
+                - !Ref WebAppS3ReadOnlyEC2
+        DependsOn: WebAppS3ReadOnlyEC2
+
+    LBSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: LoadBalancer SG allowing inbound to port 80
+            VpcId:
+                Fn::ImportValue:
+                    !Sub "${ProjectName}-VPC"
+            SecurityGroupEgress:
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: 0.0.0.0/0
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  CidrIp: 0.0.0.0/0
+                  FromPort: 80
+                  ToPort: 80
+            Tags:
+                - Key: Name
+                  Value: !Ref ProjectName
+
+    WebServerSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: SG for WebServer in private subnet
+            GroupName: WebServerSG
+            VpcId:
+                Fn::ImportValue:
+                    !Sub "${ProjectName}-VPC"
+            SecurityGroupEgress:
+                - IpProtocol: tcp
+                  FromPort: 0
+                  ToPort: 65535
+                  CidrIp: 0.0.0.0/0
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  SourceSecurityGroupId: !Ref LBSG
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  SourceSecurityGroupId: !Ref JumpSG
+            Tags:
+                - Key: Name
+                  Value: !Ref ProjectName
+    WSLaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+                SecurityGroups:
+                    - !Ref WebServerSG
+                UserData:
+                    Fn::Base64: !Sub |
+                        #!/bin/bash
+                        apt-get update -y        
+                        apt-get install unzip awscli -y
+                        apt-get install apache2 -y
+                        aws s3 cp  s3://uda-p2-857459324715947/udagram-webapp.zip /tmp/udagram-webapp.zip
+                        rm -rf /var/www/html/*
+                        unzip /tmp/udagram-webapp.zip -d /var/www/html
+                        systemctl start apache2.service
+                        
+                #KeyName: !Ref AppServerKeyPair
+                IamInstanceProfile: !Ref WSInstanceProfile
+                ImageId: !Ref AppServerImageID
+                InstanceType: !Ref ServerInstanceType
+                BlockDeviceMappings:
+                    - DeviceName: "/dev/sdk"
+                      Ebs:
+                        VolumeSize: "10"
+
+    WSTargetGroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties:
+            HealthCheckIntervalSeconds: 35
+            HealthCheckTimeoutSeconds: 8
+            HealthCheckPath: /
+            HealthCheckProtocol: HTTP
+            HealthyThresholdCount: 2
+            UnhealthyThresholdCount: 4
+            Protocol: HTTP
+            Port: 80
+            VpcId:
+                Fn::ImportValue:
+                    !Sub "${ProjectName}-VPC"
+    WSAutoScalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            VPCZoneIdentifier:
+                - Fn::ImportValue:
+                    !Sub "${ProjectName}-Private-Subnet-AZ1"
+                - Fn::ImportValue:
+                    !Sub "${ProjectName}-Private-Subnet-AZ2"
+            LaunchConfigurationName: !Ref WSLaunchConfiguration
+            MinSize: "4"
+            MaxSize: "4"
+            TargetGroupARNs:
+                - !Ref WSTargetGroup
+    WSLB:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties:
+            Subnets:
+                - Fn::ImportValue:
+                    !Sub "${ProjectName}-Public-Subnet-AZ1"
+                - Fn::ImportValue:
+                    !Sub "${ProjectName}-Public-Subnet-AZ2"
+            SecurityGroups:
+                - !Ref LBSG
+    WSLBListener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties:
+            DefaultActions:
+                - Type: forward
+                  TargetGroupArn: !Ref WSTargetGroup
+            LoadBalancerArn: !Ref WSLB
+            Port: '80'
+            Protocol: HTTP
+    WSLBListenerRule:
+        Type: AWS::ElasticLoadBalancingV2::ListenerRule
+        Properties:
+            Actions:
+                - Type: forward
+                  TargetGroupArn: !Ref WSTargetGroup
+            Conditions:
+                - Field: path-pattern
+                  Values: [/]
+            ListenerArn: !Ref WSLBListener
+            Priority: 1
+
+# --------- 
+# Bastion host to ssh into app instances 
+# --------- 
+    # JumpServer:
+    #     Type: AWS::EC2::Instance
+    #     Properties: 
+    #         SecurityGroups: 
+    #             - !Ref JumpSG
+    #         SubnetId:
+    #             - Fn::ImportValue:
+    #                 !Sub "${ProjectName}-Public-Subnet-AZ1"
+    #         KeyName: !Ref AppServerKeyPair
+    #         ImageId: !Ref AppServerImageID
+    #         InstanceType: t2.micro
+    #         BlockDeviceMappings:
+    #             -   DeviceName: "/dev/sdk"
+    #                 Ebs:
+    #                     VolumeSize: "10"
+    #         Tags:
+    #             - Key: Name
+    #               Value: "${ProjectName}-JumpInstance"
+    JumpSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: SG for bastion host to ssh into app instances
+            GroupName: JumpSG
+            VpcId:
+                Fn::ImportValue:
+                    !Sub "${ProjectName}-VPC"
+            SecurityGroupEgress:
+                - IpProtocol: tcp
+                  FromPort: 0
+                  ToPort: 65535
+                  CidrIp: 0.0.0.0/0
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+                  CidrIp: 0.0.0.0/0
+            Tags:
+                - Key: Name
+                  Value: !Ref ProjectName
+# --------- 
+# Outputs
+# --------- 
+Outputs:
+    LBWebAppPublicURL:
+        Description: Full Public Url to access WebApp via Loadbalancer 
+        Value: !Join ["://", [http, !GetAtt WSLB.DNSName]]
+        Export:
+            Name: !Sub ${ProjectName}-LB-PublicURL

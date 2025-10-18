@@ -1,0 +1,6 @@
+# Describe GuardDuty findings that were detected related to the brute force attack
+Policy:IAMUser/RootCredentialUsage on Web Service Instance.
+
+# Research the AWS Guard Duty documentation page and explain how GuardDuty may have detected this attack - i.e. what was its source of information.
+To detect unauthorized and unexpected activity in AWS environment, GuardDuty analyzes and processes data from AWS CloudTrail event logs, VPC Flow Logs, and DNS logs to detect anomalies involving the following AWS resource types: IAM Access Keys, EC2 Instances, and S3 Buckets.
+In this case, VPC flow logs capture information about IP traffic where multiple failed attempts to access the Web server from the same IP indicates brute force attack.

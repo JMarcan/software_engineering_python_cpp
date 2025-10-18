@@ -1,0 +1,231 @@
+Description: >
+  High-Avaibility Web App for Udacity CloudDevOps Nanodegree, Project 2 using CloudFormation,
+  This template creates network infrastructure stack
+
+# --------- 
+# Inputs
+# --------- 
+Parameters:
+  ProjectName:
+    Type: String
+
+  VPCCIDR:
+    Description: The IP range for VPC (CIDR notation)
+    Type: String
+
+  PublicSubnet1CIDR:
+    Description: The IP range for PublicSubnet1 (CIDR notation)
+    Type: String
+
+  PublicSubnet2CIDR:
+    Description: The IP range for PublicSubnet2 (CIDR notation)
+    Type: String
+
+  PrivateSubnet1CIDR:
+    Description: The IP range for PrivateSubnet1 (CIDR notation)
+    Type: String
+
+  PrivateSubnet2CIDR:
+    Description: The IP range for PrivateSubnet2 (CIDR notation)
+    Type: String
+
+Resources:
+# --------- 
+# VPC and its subnets
+# --------- 
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCIDR
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value: !Sub ${ProjectName}-VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-Public-Subnet-AZ1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ProjectName}-Public-Subnet-AZ2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-Private-Subnet-AZ1
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-Private-Subnet-AZ2
+
+# --------- 
+# Routing
+# --------- 
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+
+  PublicSubnet1RTAssociaation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RTAssociaation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRT1:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: Name
+            Value: !Ref ProjectName
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT1  
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnetRT1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRT1
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateRT2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnetRT2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRT2
+      SubnetId: !Ref PrivateSubnet2
+# --------- 
+# Internet gateway
+# --------- 
+  IGW:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+        - Key: Name
+          Value: !Sub ProjectName
+
+  IGWAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        InternetGatewayId: !Ref IGW
+        VpcId: !Ref VPC
+  NGEIP1:
+    Type: AWS::EC2::EIP
+    DependsOn: IGWAttachment
+    Properties:
+      Domain: vpc
+  NGEIP2:
+    Type: AWS::EC2::EIP
+    DependsOn: IGWAttachment
+    Properties:
+      Domain: VPC
+
+# --------- 
+# NAT Gateways
+# --------- 
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NGEIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NGEIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+# --------- 
+# Outputs
+# --------- 
+Outputs: 
+  WebsiteURL:
+    Value: "Test"
+    Description: Application URL
+
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${ProjectName}-VPC"
+
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-Private-Subnet-AZ1"
+
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-Private-Subnet-AZ2"
+
+  PublicSubnet1:
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "${ProjectName}-Public-Subnet-AZ1"
+
+  PublicSubnet2:
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub "${ProjectName}-Public-Subnet-AZ2"

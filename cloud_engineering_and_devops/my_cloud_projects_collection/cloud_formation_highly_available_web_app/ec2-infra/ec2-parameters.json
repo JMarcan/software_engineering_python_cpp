@@ -1,0 +1,19 @@
+[
+    {
+        "ParameterKey": "ProjectName",
+        "ParameterValue": "udacity-p2"
+    },
+    {
+        "ParameterKey": "ServerInstanceType",
+        "ParameterValue": "t3.micro"
+    },
+    {
+        "ParameterKey": "AppServerImageID",
+        "ParameterValue": "ami-07d8796a2b0f8d29c"
+    },
+    {
+        "ParameterKey": "AppServerKeyPair",
+        "ParameterValue": "ec2_key"
+    }
+
+]

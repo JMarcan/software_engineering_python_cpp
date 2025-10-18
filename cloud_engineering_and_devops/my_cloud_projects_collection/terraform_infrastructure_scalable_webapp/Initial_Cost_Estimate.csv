@@ -1,0 +1,14 @@
+Group hierarchy,Region,Description,Service,Upfront,Monthly,First 12 months total,Currency,Configuration summary
+My Estimate,US East (N. Virginia),,Amazon Virtual Private Cloud (VPC),0,958.7,5794.20,USD,Number of NAT Gateways (2)
+My Estimate,US East (N. Virginia),load balancers,Application Load Balancer,0,1200.85,14410.20,USD,Number of Application Load Balancers (2)
+My Estimate,US East (N. Virginia),web apps,Amazon EC2,0,1068.76,12825.12,USD,"Operating system (Linux), Quantity (6), Pricing strategy (Compute Savings Plans 1 Year No Upfront), Storage amount (30 GB), Instance type (t3.2xlarge)"
+My Estimate,US East (N. Virginia),application servers,Amazon EC2,0,1068.76,12825.12,USD,"Operating system (Linux), Quantity (6), Pricing strategy (Compute Savings Plans 1 Year No Upfront), Storage amount (30 GB), Instance type (t3.2xlarge)"
+My Estimate,US East (N. Virginia),,S3 Standard,0,500.00,6000.00,USD,S3 Standard storage (10000 GB per month)
+My Estimate,US East (N. Virginia),,Data Transfer,0,0.00,0.00,USD,
+My Estimate,US East (N. Virginia),,Amazon RDS for PostgreSQL,0,4001.75,48021.02,USD,"Quantity (1), Pricing strategy (Standard Reserved Instances 1 Year No Upfront), Storage volume (General Purpose SSD (gp2)), Storage amount (30 GB per month), Instance type (db.m5.12xlarge)"
+My Estimate,US East (N. Virginia),,Amazon CloudWatch,0,125.0451,1500.54,USD,"Number of Metrics (includes detailed and custom metrics) (100), Standard Logs: Data Ingested (10 GB), Number of Custom/Cross-account events (100), Number of Dashboards (30)"
+My Estimate,US East (N. Virginia),,Amazon Elastic IP,0,0.00,0.00,USD,"Number of EC2 instances (2), Number of EIPs per instance (1)"
+,,,,Total,8923.86,,,
+,,,,,,,,
+Acknowledgement,,,,,,,,
+"* AWS Pricing Calculator provides only an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",,,,,,,,

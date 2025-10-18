@@ -1,0 +1,35 @@
+# Q: Research and analyze which of the vulnerabilities appear to be related to the code that was deployed for the environment in this project. Provide recommendations on how to remediate the vulnerabilities.
+
+1. Application Load Balancer should be configured to reditect all HTTP requests to HTTPS
+Without that data in transit are transmitted unecrypted.
+
+- Name: securityhub-alb-http-to-https-redirection-check-ed6a046b
+- AWS Config Rule: config-rule-vqvgva
+
+Remediation:
+- In the EC2 configuration set HTTPS for load balances (port 443).
+
+2. RDP connect should be restricted to specific IP adresses
+Without IP restrictions attacker could connect from any device
+
+- Name: securityhub-restricted-ssh-413e43eb
+- Resource: EC2 SecurityGroup
+- AWS Config Rule: config-rule-mgmu25
+
+Remediation:
+- Allow RDP connect only from specific IP adresses
+
+3. S3 bucket server side encryption should be enabled 
+
+- Name: securityhub-s3-bucket-server-side-encryption-enabled-084982da
+- Resource: S3 Bucket
+- AWS Config Rule: config-rule-tcfzl3 
+
+Remediation:
+- Enable server side encryption in S3 buckets configuration
+
+4. Unused ports should be closed
+- Source: Amazon inspector
+
+Remediation:
+- Configure restrictive ACL rules on both - VPC level and E2C instance level.
